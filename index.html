@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hammy's World 🐹</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&family=Fredoka+One&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --orange: #e07b39;
+    --orange-dark: #c9662a;
+    --orange-light: #faeeda;
+    --orange-border: #f0c878;
+    --green: #3b6d11;
+    --green-light: #eaf3de;
+    --green-mid: #97c459;
+    --red: #a32d2d;
+    --red-light: #fcebeb;
+    --red-mid: #f09595;
+    --amber: #854f0b;
+    --gray-light: #f1efe8;
+    --gray-mid: #d3d1c7;
+    --gray-text: #5f5e5a;
+    --text: #2c2c2a;
+    --white: #fff;
+    --radius: 16px;
+    --shadow: 0 4px 24px rgba(0,0,0,0.10);
+  }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: #fff8f0;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 2rem 1rem 4rem;
+    color: var(--text);
+  }
+
+  #game {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .screen { display: none; flex-direction: column; align-items: center; gap: 1rem; width: 100%; }
+  .screen.active { display: flex; }
+
+  /* Header bar */
+  .top-bar {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--white);
+    border-radius: var(--radius);
+    padding: 10px 18px;
+    border: 2px solid var(--orange-border);
+    box-shadow: var(--shadow);
+  }
+  .game-title { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--orange); }
+  .score-pill { background: var(--orange-light); border: 2px solid var(--orange-border); border-radius: 20px; padding: 4px 14px; font-size: 0.9rem; font-weight: 800; color: var(--amber); }
+
+  /* Home screen */
+  .hamster-hero {
+    width: 140px; height: 140px;
+    background: var(--orange-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 5rem;
+    border: 4px solid var(--orange-border);
+    animation: bounce 2s ease-in-out infinite;
+    box-shadow: var(--shadow);
+  }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+
+  .home-title { font-family: 'Fredoka One', cursive; font-size: 2.4rem; color: var(--orange); text-align: center; line-height: 1.2; }
+  .home-sub { font-size: 1rem; color: var(--gray-text); text-align: center; line-height: 1.5; }
+
+  .menu-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; width: 100%; }
+  .menu-btn {
+    background: var(--white);
+    border: 2px solid var(--gray-mid);
+    border-radius: var(--radius);
+    padding: 1.2rem 0.8rem;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    transition: transform 0.15s, border-color 0.15s, box-shadow 0.15s;
+    font-family: 'Nunito', sans-serif;
+    box-shadow: var(--shadow);
+  }
+  .menu-btn:hover { transform: scale(1.04); border-color: var(--orange); box-shadow: 0 6px 28px rgba(224,123,57,0.18); }
+  .menu-btn .icon { font-size: 2.4rem; }
+  .menu-btn .label { font-size: 1rem; font-weight: 800; color: var(--text); }
+  .menu-btn .desc { font-size: 0.78rem; color: var(--gray-text); text-align: center; line-height: 1.4; }
+
+  /* Section header */
+  .section-title { font-family: 'Fredoka One', cursive; font-size: 1.5rem; color: var(--orange); text-align: center; }
+  .instr { font-size: 0.9rem; color: var(--gray-text); text-align: center; line-height: 1.5; }
+
+  /* Hamster display */
+  .hamster-box {
+    width: 110px; height: 110px;
+    background: var(--orange-light);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.6rem;
+    border: 3px solid var(--orange-border);
+    animation: bounce 2s ease-in-out infinite;
+  }
+
+  /* HP bar */
+  .hp-wrap { width: 100%; }
+  .hp-bar-bg { width: 100%; height: 18px; background: var(--gray-light); border-radius: 20px; border: 2px solid var(--gray-mid); overflow: hidden; }
+  .hp-bar { height: 100%; width: 100%; border-radius: 20px; background: linear-gradient(90deg,#63c257,#a0d96b); transition: width 0.5s, background 0.5s; }
+  .hp-label { font-size: 12px; color: var(--gray-text); text-align: center; margin-top: 4px; }
+
+  /* Food grid */
+  .food-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; width: 100%; }
+  .food-card {
+    background: var(--white);
+    border: 2px solid var(--gray-mid);
+    border-radius: 14px;
+    padding: 0.9rem 0.4rem;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 6px;
+    transition: transform 0.15s, border-color 0.15s;
+    font-family: 'Nunito', sans-serif;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .food-card:hover { transform: scale(1.06); border-color: var(--orange); }
+  .food-card .fi { font-size: 2.2rem; }
+  .food-card .fn { font-size: 0.8rem; font-weight: 700; color: var(--text); text-align: center; }
+
+  /* Behavior / care grid */
+  .choice-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%; }
+  .choice-card {
+    background: var(--white);
+    border: 2px solid var(--gray-mid);
+    border-radius: 14px;
+    padding: 1rem 0.8rem;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    text-align: center;
+    font-size: 0.85rem; font-weight: 700; color: var(--text);
+    line-height: 1.4;
+    transition: transform 0.15s, border-color 0.15s;
+    font-family: 'Nunito', sans-serif;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+    min-height: 64px;
+  }
+  .choice-card:hover { transform: scale(1.04); border-color: var(--orange); }
+
+  /* Habitat */
+  .hab-section { width: 100%; }
+  .hab-label { font-size: 0.85rem; font-weight: 800; color: var(--gray-text); margin: 10px 0 6px; text-align: center; text-transform: uppercase; letter-spacing: 0.05em; }
+  .hab-row { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; width: 100%; }
+  .hab-card {
+    background: var(--white);
+    border: 2.5px solid var(--gray-mid);
+    border-radius: 14px;
+    padding: 0.7rem 0.4rem;
+    cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; gap: 5px;
+    transition: transform 0.15s, border-color 0.15s, background 0.15s;
+    font-family: 'Nunito', sans-serif;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+  }
+  .hab-card:hover { transform: scale(1.05); }
+  .hab-card.selected { border-color: var(--orange); background: var(--orange-light); }
+  .hab-card .hi { font-size: 1.8rem; }
+  .hab-card .hn { font-size: 0.75rem; font-weight: 700; text-align: center; color: var(--text); }
+
+  /* Result message */
+  .result-msg {
+    padding: 0.9rem 1.2rem;
+    border-radius: 14px;
+    font-weight: 700;
+    font-size: 1rem;
+    text-align: center;
+    width: 100%;
+    display: none;
+    line-height: 1.5;
+  }
+  .result-msg.good { background: var(--green-light); color: var(--green); border: 2px solid var(--green-mid); }
+  .result-msg.bad  { background: var(--red-light);   color: var(--red);   border: 2px solid var(--red-mid); }
+
+  /* Buttons */
+  .btn-row { display: flex; gap: 10px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+  .next-btn {
+    background: var(--orange);
+    color: var(--white);
+    border: none;
+    border-radius: 22px;
+    padding: 10px 28px;
+    font-size: 1rem; font-weight: 800;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    display: none;
+    transition: background 0.15s, transform 0.12s;
+  }
+  .next-btn:hover { background: var(--orange-dark); transform: scale(1.04); }
+  .back-btn {
+    background: transparent;
+    border: 1.5px solid var(--gray-mid);
+    border-radius: 22px;
+    padding: 9px 20px;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    color: var(--gray-text);
+    transition: background 0.15s;
+  }
+  .back-btn:hover { background: var(--gray-light); }
+  .confirm-btn {
+    background: var(--green);
+    color: var(--white);
+    border: none;
+    border-radius: 22px;
+    padding: 10px 28px;
+    font-size: 1rem; font-weight: 800;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    transition: background 0.15s;
+  }
+  .confirm-btn:disabled { background: var(--gray-mid); cursor: not-allowed; }
+  .confirm-btn:not(:disabled):hover { background: #27500a; }
+
+  .situation-text {
+    font-size: 1rem; font-weight: 700; color: var(--text);
+    text-align: center; line-height: 1.5;
+    background: var(--white);
+    border-radius: 14px;
+    padding: 0.8rem 1rem;
+    width: 100%;
+    border: 1.5px solid var(--gray-mid);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+  }
+
+  /* Progress dots */
+  .progress-dots { display: flex; gap: 6px; justify-content: center; flex-wrap: wrap; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; background: var(--gray-mid); transition: background 0.3s; }
+  .dot.done { background: var(--orange); }
+  .dot.current { background: var(--orange-border); }
+
+  /* Footer */
+  footer {
+    margin-top: 2rem;
+    font-size: 0.78rem;
+    color: var(--gray-mid);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div id="game">
+
+  <!-- TOP BAR (shown always) -->
+  <div class="top-bar">
+    <span class="game-title">🐹 Hammy's World</span>
+    <span class="score-pill" id="score-display">⭐ 0 pts</span>
+  </div>
+
+  <!-- HOME SCREEN -->
+  <div id="screen-home" class="screen active">
+    <div class="hamster-hero">🐹</div>
+    <div class="home-title">Welcome to<br>Hammy's World!</div>
+    <div class="home-sub">Help Hammy stay happy and healthy.<br>Feed him, understand his moods, build his home, and take care of him every day!</div>
+    <div class="menu-grid">
+      <button class="menu-btn" onclick="goTo('screen-feed')">
+        <span class="icon">🥕</span>
+        <span class="label">Feed Hammy</span>
+        <span class="desc">Pick safe foods and keep him healthy!</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('screen-behavior')">
+        <span class="icon">🔍</span>
+        <span class="label">Hamster Moods</span>
+        <span class="desc">What is Hammy trying to tell you?</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('screen-habitat')">
+        <span class="icon">🏠</span>
+        <span class="label">Build His Home</span>
+        <span class="desc">Choose the best stuff for his cage!</span>
+      </button>
+      <button class="menu-btn" onclick="goTo('screen-care')">
+        <span class="icon">💧</span>
+        <span class="label">Daily Care</span>
+        <span class="desc">What does Hammy need right now?</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- FEED SCREEN -->
+  <div id="screen-feed" class="screen">
+    <div class="section-title">🥕 Feed Hammy!</div>
+    <div class="instr">Tap a food. Good foods make Hammy happy. Bad foods hurt him!</div>
+    <div class="hamster-box" id="feed-hamster">🐹</div>
+    <div class="hp-wrap">
+      <div class="hp-bar-bg"><div class="hp-bar" id="hp-bar"></div></div>
+      <div class="hp-label" id="hp-label">Hammy's health: 100%</div>
+    </div>
+    <div class="progress-dots" id="feed-dots"></div>
+    <div class="food-grid" id="food-grid"></div>
+    <div class="result-msg" id="feed-result"></div>
+    <div class="btn-row">
+      <button class="next-btn" id="feed-next" onclick="nextFood()">Next food →</button>
+      <button class="back-btn" onclick="goTo('screen-home')">← Menu</button>
+    </div>
+  </div>
+
+  <!-- BEHAVIOR SCREEN -->
+  <div id="screen-behavior" class="screen">
+    <div class="section-title">🔍 Hamster Moods</div>
+    <div class="instr">Read what Hammy is doing and pick the right answer!</div>
+    <div class="hamster-box" id="beh-hamster">🐹</div>
+    <div class="situation-text" id="beh-situation"></div>
+    <div class="progress-dots" id="beh-dots"></div>
+    <div class="choice-grid" id="beh-grid"></div>
+    <div class="result-msg" id="beh-result"></div>
+    <div class="btn-row">
+      <button class="next-btn" id="beh-next" onclick="nextBehavior()">Next →</button>
+      <button class="back-btn" onclick="goTo('screen-home')">← Menu</button>
+    </div>
+  </div>
+
+  <!-- HABITAT SCREEN -->
+  <div id="screen-habitat" class="screen">
+    <div class="section-title">🏠 Build Hammy's Home</div>
+    <div class="instr">Choose the BEST item in each category for Hammy's cage!</div>
+    <div class="hab-section" id="hab-categories"></div>
+    <div class="result-msg" id="hab-result"></div>
+    <div class="btn-row">
+      <button class="confirm-btn" id="hab-confirm" disabled onclick="checkHabitat()">Check my choices ✓</button>
+      <button class="back-btn" onclick="goTo('screen-home')">← Menu</button>
+    </div>
+  </div>
+
+  <!-- CARE SCREEN -->
+  <div id="screen-care" class="screen">
+    <div class="section-title">💧 Daily Care</div>
+    <div class="instr">Hammy needs something! Tap what you should do.</div>
+    <div class="hamster-box" id="care-hamster">🐹</div>
+    <div class="situation-text" id="care-situation"></div>
+    <div class="progress-dots" id="care-dots"></div>
+    <div class="choice-grid" id="care-grid"></div>
+    <div class="result-msg" id="care-result"></div>
+    <div class="btn-row">
+      <button class="next-btn" id="care-next" onclick="nextCare()">Next →</button>
+      <button class="back-btn" onclick="goTo('screen-home')">← Menu</button>
+    </div>
+  </div>
+
+</div>
+
+<footer>Made with 🐹 love — Hammy's World</footer>
+
+<script>
+// ─── DATA ───────────────────────────────────────────────────────────────────
+
+const foods = [
+  { name: 'Carrot',          icon: '🥕', safe: true,  msg: 'Great! Carrots are a healthy treat for hamsters.' },
+  { name: 'Sunflower seeds', icon: '🌻', safe: true,  msg: 'Yes! Seeds are a hamster favourite.' },
+  { name: 'Broccoli',        icon: '🥦', safe: true,  msg: 'Excellent! Broccoli is safe and nutritious.' },
+  { name: 'Apple slice',     icon: '🍎', safe: true,  msg: 'Good job! A small piece of apple is perfectly fine.' },
+  { name: 'Cucumber',        icon: '🥒', safe: true,  msg: 'Well done! Cucumber is a refreshing safe snack.' },
+  { name: 'Boiled egg',      icon: '🥚', safe: true,  msg: 'Correct! A tiny bit of egg gives Hammy protein.' },
+  { name: 'Chocolate',       icon: '🍫', safe: false, msg: 'Danger! Chocolate is toxic for hamsters!' },
+  { name: 'Avocado',         icon: '🥑', safe: false, msg: 'No! Avocado is poisonous for hamsters!' },
+  { name: 'Onion',           icon: '🧅', safe: false, msg: 'Bad idea! Onions can make hamsters very sick.' },
+  { name: 'Candy',           icon: '🍬', safe: false, msg: 'No! Too much sugar harms hamsters.' },
+  { name: 'Garlic',          icon: '🧄', safe: false, msg: 'Nope! Garlic is dangerous for small animals.' },
+  { name: 'Grape',           icon: '🍇', safe: false, msg: 'Careful! Grapes can cause kidney problems.' },
+];
+
+const behaviors = [
+  { situation: 'Hammy is running on his wheel really fast! 🏃', emoji: '😄', options: ['He is sick', 'He needs exercise — this is healthy!', 'He is angry', 'He is scared'], correct: 1, explain: 'Running on the wheel is totally normal — hamsters can run several kilometres a night!' },
+  { situation: 'Hammy is puffing out his cheek pouches! 🐹', emoji: '😊', options: ['He is sick', 'He is scared', 'He is storing food — totally normal!', 'He wants to play'], correct: 2, explain: 'Hamsters have stretchy cheek pouches to carry food back to their burrow.' },
+  { situation: 'Hammy is squeaking and biting the cage bars. 😤', emoji: '😣', options: ['He is happy', 'He needs more space or toys', 'He is sleeping', 'He is eating'], correct: 1, explain: 'Bar biting usually means boredom or stress. Try adding more toys and hiding spots!' },
+  { situation: 'Hammy is grooming himself carefully. 🧹', emoji: '😌', options: ['He is sick', 'He is bored', 'He is scared', 'He is healthy and clean — great sign!'], correct: 3, explain: 'Regular grooming means Hammy feels safe and content in his home.' },
+  { situation: 'Hammy hides and sleeps most of the day. 😴', emoji: '🌙', options: ['He is lazy', 'He is hungry', 'Normal! Hamsters are nocturnal', 'He is angry'], correct: 2, explain: 'Hamsters are nocturnal — they sleep during the day and are active at night.' },
+  { situation: 'Hammy freezes completely still for a moment. 🧊', emoji: '😮', options: ['He is dead', 'He heard a scary noise — he\'s being alert!', 'He is hungry', 'He is very happy'], correct: 1, explain: 'Freezing is a natural prey-animal instinct — Hammy is listening for danger.' },
+];
+
+const habCategories = [
+  { label: '🛏 Bedding', items: [
+    { name: 'Wood shavings',  icon: '🪵', good: true,  tip: 'Safe, absorbent, and comfortable!' },
+    { name: 'Newspaper',      icon: '📰', good: false, tip: 'Ink can be toxic and it gets soggy.' },
+    { name: 'Cotton fluff',   icon: '☁️', good: false, tip: 'Can tangle around limbs and be dangerous.' },
+  ]},
+  { label: '🎮 Entertainment', items: [
+    { name: 'Running wheel',  icon: '⭕', good: true,  tip: 'Essential for exercise and mental health!' },
+    { name: 'Mirror only',    icon: '🪞', good: false, tip: 'Not enough stimulation on its own.' },
+    { name: 'Chew toys',      icon: '🦴', good: true,  tip: 'Keeps teeth healthy and relieves boredom.' },
+  ]},
+  { label: '💧 Water', items: [
+    { name: 'Water bottle',   icon: '🧴', good: true,  tip: 'Keeps water clean and spill-free!' },
+    { name: 'Open bowl',      icon: '🫙', good: false, tip: 'Gets dirty quickly and can flood bedding.' },
+    { name: 'No water',       icon: '❌', good: false, tip: 'Hamsters ALWAYS need fresh water!' },
+  ]},
+  { label: '🏡 Hiding spot', items: [
+    { name: 'Wooden house',   icon: '🏠', good: true,  tip: 'Hamsters need a safe cozy hideout!' },
+    { name: 'Empty cage',     icon: '⬜', good: false, tip: 'No shelter = stressed hamster.' },
+    { name: 'Cardboard box',  icon: '📦', good: false, tip: 'Gets wet and mouldy quickly.' },
+  ]},
+];
+
+const cares = [
+  { situation: 'Hammy\'s water bottle is empty and he looks thirsty! 😫', emoji: '😫', options: ['Refill with fresh water', 'Give him juice instead', 'Leave him alone', 'Feed him cheese'], correct: 0, msg: 'Fresh water is essential every single day!' },
+  { situation: 'The cage is starting to smell bad. 🤢', emoji: '🤢', options: ['Spray perfume inside', 'Clean the cage with safe soap and fresh bedding', 'Ignore it', 'Add more food on top'], correct: 1, msg: 'Cleaning the cage regularly keeps Hammy healthy and happy.' },
+  { situation: 'Hammy looks bored and restless at midnight. 🥱', emoji: '🥱', options: ['Force him to sleep', 'Give him toys and let him explore at night', 'Lock him in a box', 'Feed him chocolate'], correct: 1, msg: 'Hamsters are nocturnal — give him enrichment at night when he\'s naturally active.' },
+  { situation: 'Hammy\'s nails look very long and curly. 🦔', emoji: '🦔', options: ['Cut them yourself with scissors', 'Ask a vet or experienced owner to trim them', 'Ignore them', 'Put him outside'], correct: 1, msg: 'A vet or experienced owner should trim his nails safely to avoid injury.' },
+  { situation: 'It\'s very hot today and Hammy looks sluggish. ☀️', emoji: '😓', options: ['Put him in the freezer to cool down', 'Move his cage to a cool shaded spot', 'Ignore it', 'Give him ice cream'], correct: 1, msg: 'Hamsters can get heatstroke — keep them in a cool room away from direct sun.' },
+];
+
+// ─── STATE ──────────────────────────────────────────────────────────────────
+
+let score = 0;
+let hp = 100;
+let foodOrder = [], foodQ = 0;
+let behOrder  = [], behQ  = 0;
+let careOrder = [], careQ = 0;
+let habSel    = {};
+
+// ─── HELPERS ────────────────────────────────────────────────────────────────
+
+function shuffle(arr) {
+  return [...arr].map((v,i)=>({v,s:Math.random()})).sort((a,b)=>a.s-b.s).map(x=>x.v);
+}
+
+function addScore(n) {
+  score = Math.max(0, score + n);
+  document.getElementById('score-display').textContent = '⭐ ' + score + ' pts';
+}
+
+function setHP(v) {
+  hp = Math.max(0, Math.min(100, v));
+  const bar = document.getElementById('hp-bar');
+  bar.style.width = hp + '%';
+  bar.style.background = hp > 60
+    ? 'linear-gradient(90deg,#63c257,#a0d96b)'
+    : hp > 30
+      ? 'linear-gradient(90deg,#ef9f27,#fac775)'
+      : 'linear-gradient(90deg,#e24b4a,#f09595)';
+  document.getElementById('hp-label').textContent = "Hammy's health: " + hp + '%';
+}
+
+function makeDots(containerId, total, current) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = '';
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement('div');
+    d.className = 'dot' + (i < current ? ' done' : i === current ? ' current' : '');
+    el.appendChild(d);
+  }
+}
+
+function showResult(id, good, text) {
+  const el = document.getElementById(id);
+  el.className = 'result-msg ' + (good ? 'good' : 'bad');
+  el.textContent = text;
+  el.style.display = 'block';
+}
+
+function goTo(screenId) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(screenId).classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (screenId === 'screen-feed')     initFeed();
+  if (screenId === 'screen-behavior') initBehavior();
+  if (screenId === 'screen-habitat')  initHabitat();
+  if (screenId === 'screen-care')     initCare();
+}
+
+// ─── FEED MINI-GAME ─────────────────────────────────────────────────────────
+
+const FOODS_PER_ROUND = 6;
+
+function initFeed() {
+  foodOrder = shuffle(foods).slice(0, FOODS_PER_ROUND);
+  foodQ = 0;
+  hp = 100; setHP(100);
+  document.getElementById('feed-result').style.display = 'none';
+  document.getElementById('feed-next').style.display = 'none';
+  document.getElementById('feed-hamster').textContent = '🐹';
+  renderFoodQuestion();
+}
+
+function renderFoodQuestion() {
+  makeDots('feed-dots', FOODS_PER_ROUND, foodQ);
+  if (foodQ >= FOODS_PER_ROUND) {
+    document.getElementById('food-grid').innerHTML = '';
+    showResult('feed-result', true, '🎉 Feeding round done! Hammy is ' + (hp >= 70 ? 'super healthy!' : hp >= 40 ? 'okay!' : 'a bit unwell — choose better foods next time!'));
+    document.getElementById('feed-next').style.display = 'none';
+    return;
+  }
+  document.getElementById('feed-result').style.display = 'none';
+  document.getElementById('feed-next').style.display = 'none';
+  document.getElementById('feed-hamster').textContent = '🐹';
+
+  const grid = document.getElementById('food-grid');
+  grid.innerHTML = '';
+  // Show 3 cards: the current food + 2 others of mixed safe/unsafe
+  const others = shuffle(foods.filter(f => f !== foodOrder[foodQ])).slice(0, 2);
+  const options = shuffle([foodOrder[foodQ], ...others]);
+  options.forEach(f => {
+    const d = document.createElement('div');
+    d.className = 'food-card';
+    d.innerHTML = '<span class="fi">' + f.icon + '</span><span class="fn">' + f.name + '</span>';
+    d.onclick = () => pickFood(f);
+    grid.appendChild(d);
+  });
+}
+
+function pickFood(f) {
+  document.querySelectorAll('.food-card').forEach(c => c.onclick = null);
+  const good = f.safe;
+  if (good) {
+    addScore(10);
+    document.getElementById('feed-hamster').textContent = '😊';
+    showResult('feed-result', true, '✅ ' + f.msg + ' +10 pts!');
+  } else {
+    addScore(-5);
+    setHP(hp - 20);
+    document.getElementById('feed-hamster').textContent = '😣';
+    showResult('feed-result', false, '❌ ' + f.msg);
+  }
+  document.getElementById('feed-next').style.display = 'inline-block';
+}
+
+function nextFood() {
+  foodQ++;
+  renderFoodQuestion();
+}
+
+// ─── BEHAVIOR MINI-GAME ──────────────────────────────────────────────────────
+
+function initBehavior() {
+  behOrder = shuffle([...Array(behaviors.length).keys()]);
+  behQ = 0;
+  document.getElementById('beh-result').style.display = 'none';
+  document.getElementById('beh-next').style.display = 'none';
+  document.getElementById('beh-hamster').textContent = '🐹';
+  renderBehaviorQuestion();
+}
+
+function renderBehaviorQuestion() {
+  makeDots('beh-dots', behaviors.length, behQ);
+  if (behQ >= behaviors.length) {
+    document.getElementById('beh-grid').innerHTML = '';
+    document.getElementById('beh-situation').textContent = '🎉 All done! You know Hammy really well!';
+    document.getElementById('beh-result').style.display = 'none';
+    document.getElementById('beh-next').style.display = 'none';
+    return;
+  }
+  const b = behaviors[behOrder[behQ]];
+  document.getElementById('beh-hamster').textContent = b.emoji;
+  document.getElementById('beh-situation').textContent = b.situation;
+  document.getElementById('beh-result').style.display = 'none';
+  document.getElementById('beh-next').style.display = 'none';
+
+  const grid = document.getElementById('beh-grid');
+  grid.innerHTML = '';
+  b.options.forEach((opt, i) => {
+    const d = document.createElement('div');
+    d.className = 'choice-card';
+    d.textContent = opt;
+    d.onclick = () => pickBehavior(i, b);
+    grid.appendChild(d);
+  });
+}
+
+function pickBehavior(chosen, b) {
+  document.querySelectorAll('#beh-grid .choice-card').forEach(c => c.onclick = null);
+  if (chosen === b.correct) {
+    addScore(10);
+    document.getElementById('beh-hamster').textContent = '😊';
+    showResult('beh-result', true, '✅ Correct! ' + b.explain + ' +10 pts!');
+  } else {
+    addScore(-3);
+    document.getElementById('beh-hamster').textContent = '😕';
+    showResult('beh-result', false, '❌ Not quite! ' + b.explain);
+  }
+  document.getElementById('beh-next').style.display = 'inline-block';
+}
+
+function nextBehavior() {
+  behQ++;
+  document.getElementById('beh-hamster').textContent = '🐹';
+  renderBehaviorQuestion();
+}
+
+// ─── HABITAT MINI-GAME ───────────────────────────────────────────────────────
+
+function initHabitat() {
+  habSel = {};
+  document.getElementById('hab-result').style.display = 'none';
+  document.getElementById('hab-confirm').disabled = true;
+
+  const wrap = document.getElementById('hab-categories');
+  wrap.innerHTML = '';
+
+  habCategories.forEach((cat, ci) => {
+    const lbl = document.createElement('div');
+    lbl.className = 'hab-label';
+    lbl.textContent = cat.label;
+    wrap.appendChild(lbl);
+
+    const row = document.createElement('div');
+    row.className = 'hab-row';
+    cat.items.forEach((item, ii) => {
+      const d = document.createElement('div');
+      d.className = 'hab-card';
+      d.innerHTML = '<span class="hi">' + item.icon + '</span><span class="hn">' + item.name + '</span>';
+      d.onclick = () => {
+        row.querySelectorAll('.hab-card').forEach(c => c.classList.remove('selected'));
+        d.classList.add('selected');
+        habSel[ci] = ii;
+        document.getElementById('hab-confirm').disabled = Object.keys(habSel).length < habCategories.length;
+      };
+      row.appendChild(d);
+    });
+    wrap.appendChild(row);
+  });
+}
+
+function checkHabitat() {
+  let correct = 0;
+  let tips = [];
+  habCategories.forEach((cat, ci) => {
+    const chosen = cat.items[habSel[ci]];
+    if (chosen && chosen.good) { correct++; }
+    else if (chosen) { tips.push(chosen.tip); }
+  });
+
+  if (correct === habCategories.length) {
+    addScore(30);
+    showResult('hab-result', true, '🏠 Perfect habitat! Hammy is thrilled! +30 pts!');
+  } else {
+    addScore(-5);
+    showResult('hab-result', false, '🔧 ' + correct + '/' + habCategories.length + ' correct. Hint: ' + (tips[0] || 'Try again!'));
+  }
+}
+
+// ─── CARE MINI-GAME ──────────────────────────────────────────────────────────
+
+function initCare() {
+  careOrder = shuffle([...Array(cares.length).keys()]);
+  careQ = 0;
+  document.getElementById('care-result').style.display = 'none';
+  document.getElementById('care-next').style.display = 'none';
+  document.getElementById('care-hamster').textContent = '🐹';
+  renderCareQuestion();
+}
+
+function renderCareQuestion() {
+  makeDots('care-dots', cares.length, careQ);
+  if (careQ >= cares.length) {
+    document.getElementById('care-grid').innerHTML = '';
+    document.getElementById('care-situation').textContent = '🎉 All done! Hammy is perfectly cared for!';
+    document.getElementById('care-result').style.display = 'none';
+    document.getElementById('care-next').style.display = 'none';
+    return;
+  }
+  const c = cares[careOrder[careQ]];
+  document.getElementById('care-hamster').textContent = c.emoji;
+  document.getElementById('care-situation').textContent = c.situation;
+  document.getElementById('care-result').style.display = 'none';
+  document.getElementById('care-next').style.display = 'none';
+
+  const grid = document.getElementById('care-grid');
+  grid.innerHTML = '';
+  c.options.forEach((opt, i) => {
+    const d = document.createElement('div');
+    d.className = 'choice-card';
+    d.textContent = opt;
+    d.onclick = () => pickCare(i, c);
+    grid.appendChild(d);
+  });
+}
+
+function pickCare(chosen, c) {
+  document.querySelectorAll('#care-grid .choice-card').forEach(x => x.onclick = null);
+  if (chosen === c.correct) {
+    addScore(10);
+    document.getElementById('care-hamster').textContent = '😊';
+    showResult('care-result', true, '✅ ' + c.msg + ' +10 pts!');
+  } else {
+    addScore(-3);
+    document.getElementById('care-hamster').textContent = '😕';
+    showResult('care-result', false, '❌ Not quite! ' + c.msg);
+  }
+  document.getElementById('care-next').style.display = 'inline-block';
+}
+
+function nextCare() {
+  careQ++;
+  document.getElementById('care-hamster').textContent = '🐹';
+  renderCareQuestion();
+}
+</script>
+</body>
+</html>
